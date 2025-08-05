@@ -1,0 +1,43 @@
+🧪 Trial Overview
+
+Project: Mini Audit Logger API with Secure Event Storage
+Objective: Build a small backend service that logs incoming events securely and allows retrieval. The trial focuses on clear, functional delivery with minimal complexity.
+
+⸻
+
+🔹 Requirements
+
+Core Features
+	1.	POST /event – Accepts events (JSON) and stores them securely (e.g., hashed + timestamped).
+	2.	GET /events – Retrieves stored events sorted by timestamp.
+	3.	GET /health – Simple health check endpoint.
+
+Security
+	•	Use JWT or HMAC to verify event authenticity.
+	•	Store hashes to detect tampering.
+
+Bonus (Optional)
+	•	A simple frontend to view logs.
+	•	A proof-of-integrity check.
+	•	Deployment to any cloud service.
+
+⸻
+
+📦 Deliverables
+	1.	GitHub Repository – With working code.
+	2.	README.md – 1 page only, must include:
+	•	What it does
+	•	How to run it
+	•	Example API calls
+	3.	(Optional) Short video demo (max 2 minutes) to walk through your build.
+
+⸻
+
+✅ Evaluation
+
+We’ll assess based on:
+	•	Working feature (40 pts)
+	•	Clarity in documentation (20 pts)
+	•	Security thinking (15 pts)
+	•	Code quality (15 pts)
+	•	Bonus features (10 pts)

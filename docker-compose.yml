@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  database:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: audituser
+      POSTGRES_DB: auditdb
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    depends_on:
+      - database
+    environment:
+      DATABASE_URL: postgresql://audituser:auditpass@database:5432/auditdb
+
+volumes:
+  postgres_data:

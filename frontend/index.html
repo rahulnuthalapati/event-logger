@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Audit Logger</title>
+    <link rel="stylesheet" href="static/styles/auth.css">
+</head>
+<body>
+    <h1>Mini Audit Logger</h1>
+    <div id="api-response"></div>
+    <div id="auth-container">
+        <h2>Register Application</h2>
+        <input type="text" id="app-name-input" placeholder="Application Name" />
+        <button id="register-btn">Register</button>
+        <div id="register-result"></div>
+        <hr/>
+        <h2>Login</h2>
+        <input type="text" id="auth-token-input" placeholder="Auth Token (JWT)" />
+        <button id="login-btn">Login</button>
+        <div id="login-result"></div>
+    </div>
+    <script type="module" src="static/scripts/main.js"></script>
+</body>
+</html>
