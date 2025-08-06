@@ -3,10 +3,8 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from src.database.scripts.db_init import init_db
 from src.routes import app_routes
 from src.routes import event_routes
-init_db()
 
 app = FastAPI()
 

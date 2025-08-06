@@ -15,7 +15,7 @@ services:
 
   backend:
     build: .
-    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    command: sh -c "sleep 3 && python src/database/scripts/db_init.py && uvicorn main:app --host 0.0.0.0 --port 8001 --workers 1 --reload"
     volumes:
       - .:/app
     ports:
