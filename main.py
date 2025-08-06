@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(app_routes.router, prefix="/api/app")
-app.include_router(event_routes.router, tags=["Events"])
+app.include_router(event_routes.router, prefix="/api", tags=["Events"])
 
 
 @app.get("/")

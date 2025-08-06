@@ -5,20 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini Audit Logger</title>
     <link rel="stylesheet" href="static/styles/auth.css">
+    <link rel="stylesheet" href="static/styles/events.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 </head>
 <body>
-    <h1>Mini Audit Logger</h1>
+    <nav class="navbar is-info has-shadow" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <button id="navbar-back" class="button is-white is-small is-hidden is-align-self-center ml-3 mr-1" aria-label="Back"><span class="has-text-info">&#8592;</span></button>
+            <button id="navbar-refresh" class="button is-white is-small is-hidden is-align-self-center mr-3" aria-label="Refresh"><span class="has-text-info">&#x21bb;</span></button>
+        </div>
+        <div class="navbar-menu is-active" style="width: 100%;">
+            <div class="navbar-start" style="flex: 1;"></div>
+            <div class="navbar-center is-flex is-justify-content-center" style="flex: 2;">
+                <span class="navbar-item has-text-weight-bold is-size-4 has-text-white">Mini Audit Logger</span>
+            </div>
+            <div class="navbar-end" style="flex: 1;"></div>
+        </div>
+    </nav>
     <div id="api-response"></div>
-    <div id="auth-container">
-        <h2>Register Application</h2>
-        <input type="text" id="app-name-input" placeholder="Application Name" />
-        <button id="register-btn">Register</button>
-        <div id="register-result"></div>
-        <hr/>
-        <h2>Login</h2>
-        <input type="text" id="auth-token-input" placeholder="Auth Token (JWT)" />
-        <button id="login-btn">Login</button>
-        <div id="login-result"></div>
+    <div class="container mt-5">
+        <div id="auth-container" class="box">
+            <h2>Register Application</h2>
+            <input type="text" id="app-name-input" placeholder="Application Name" />
+            <button id="register-btn" class="button is-link is-fullwidth mt-2">Register</button>
+            <div id="register-result"></div>
+            <hr/>
+            <h2>Login</h2>
+            <input type="text" id="auth-token-input" placeholder="Auth Token (JWT)" />
+            <button id="login-btn" class="button is-link is-fullwidth mt-2">View Events</button>
+            <div id="login-result"></div>
+        </div>
+        <div id="events-view" class="box" style="display:none;">
+            <div id="events-header" class="is-flex is-align-items-center mb-4" style="gap: 1rem;">
+                <h2 id="events-app-name" class="mb-0 has-text-left" style="flex: 1;"></h2>
+            </div>
+            <div id="events-list"></div>
+        </div>
     </div>
     <script type="module" src="static/scripts/main.js"></script>
 </body>

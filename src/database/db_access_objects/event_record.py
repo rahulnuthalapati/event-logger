@@ -12,7 +12,6 @@ class EventRecord:
     event_data: Dict[str, Any] = None
     timestamp: datetime = None
     event_hash: str = ""
-    auth_signature: Optional[str] = None
     
     def __post_init__(self):
         if self.event_data is None:
@@ -30,6 +29,5 @@ class EventRecord:
             source=row[3],
             event_data=row[4],
             timestamp=row[5],
-            event_hash=row[6],
-            auth_signature=row[7]
+            event_hash=row[6]
         )

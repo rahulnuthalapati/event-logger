@@ -2,13 +2,17 @@ from typing import List, Optional
 import json
 from ..db_service import get_db
 from .event_record import EventRecord
+from src.logger import get_logger
+import psycopg2.errors
+
+logger = get_logger(__name__)
 
 class EventDAO:
     """Data Access Object for event operations using plain SQL queries."""
     
     def __init__(self):
         self.table_name = "events"
-        self.return_columns = "id, app_id, type, source, event_data, timestamp, event_hash, auth_signature"
+        self.return_columns = "id, app_id, type, source, event_data, timestamp, event_hash"
     
     def create_table(self) -> None:
         """Create the events table if it doesn't exist."""
@@ -20,35 +24,37 @@ class EventDAO:
             source VARCHAR(128),
             event_data JSONB NOT NULL,
             timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            event_hash VARCHAR(128) NOT NULL,
-            auth_signature VARCHAR(256)
+            event_hash VARCHAR(128) NOT NULL
         );
         """
-        
+        logger.info("Creating events table if not exists.")
         with get_db() as (_, cur):
             cur.execute(create_table_sql)
     
     def create(self, event: EventRecord) -> EventRecord:
         """Create a new event record."""
         insert_sql = f"""
-        INSERT INTO events (app_id, type, source, event_data, timestamp, event_hash, auth_signature)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO events (app_id, type, source, event_data, timestamp, event_hash)
+        VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING {self.return_columns};
         """
-        
-        with get_db() as (_, cur):
-            cur.execute(insert_sql, (
-                event.app_id,
-                event.type,
-                event.source,
-                json.dumps(event.event_data),
-                event.timestamp,
-                event.event_hash,
-                event.auth_signature
-            ))
-            
-            result = cur.fetchone()
-            return EventRecord.from_record(result)
+        logger.info(f"Creating event for app_id={event.app_id}, type={event.type}")
+        try:
+            with get_db() as (_, cur):
+                cur.execute(insert_sql, (
+                    event.app_id,
+                    event.type,
+                    event.source,
+                    json.dumps(event.event_data),
+                    event.timestamp,
+                    event.event_hash
+                ))
+                result = cur.fetchone()
+                logger.info(f"Event created with id={result[0] if result else 'unknown'}")
+                return EventRecord.from_record(result)
+        except psycopg2.errors.UniqueViolation:
+            logger.error(f"Event creation failed: Duplicate event for app_id={event.app_id} and hash={event.event_hash}.")
+            raise ValueError("Duplicate event detected for this app.")
     
     def get_by_id(self, event_id: int) -> Optional[EventRecord]:
         """Get an event by its ID."""
@@ -57,23 +63,24 @@ class EventDAO:
         FROM events
         WHERE id = %s;
         """
-        
+        logger.info(f"Fetching event by id={event_id}")
         with get_db() as (_, cur):
             cur.execute(select_sql, (event_id,))
             result = cur.fetchone()
             
             return EventRecord.from_record(result) if result else None
     
-    def get_all(self) -> List[EventRecord]:
-        """Get all events."""
+    def get_by_app_id(self, app_id: int) -> List[EventRecord]:
+        """Get all events for a given app_id."""
         select_sql = f"""
         SELECT {self.return_columns}
         FROM events
+        WHERE app_id = %s
         ORDER BY timestamp DESC;
         """
-        
+        logger.info(f"Fetching events for app_id={app_id}")
         with get_db() as (_, cur):
-            cur.execute(select_sql)
+            cur.execute(select_sql, (app_id,))
             results = cur.fetchall()
             
             return [EventRecord.from_record(row) for row in results]
@@ -82,25 +89,27 @@ class EventDAO:
         """Update an existing event."""
         update_sql = f"""
         UPDATE events
-        SET app_id = %s, type = %s, source = %s, event_data = %s, timestamp = %s, event_hash = %s, auth_signature = %s
+        SET app_id = %s, type = %s, source = %s, event_data = %s, timestamp = %s, event_hash = %s
         WHERE id = %s
         RETURNING {self.return_columns};
         """
-        
-        with get_db() as (_, cur):
-            cur.execute(update_sql, (
-                event.app_id,
-                event.type,
-                event.source,
-                json.dumps(event.event_data),
-                event.timestamp,
-                event.event_hash,
-                event.auth_signature,
-                event.id
-            ))
-            
-            result = cur.fetchone()
-            return EventRecord.from_record(result) if result else None
+        logger.info(f"Updating event id={event.id}")
+        try:
+            with get_db() as (_, cur):
+                cur.execute(update_sql, (
+                    event.app_id,
+                    event.type,
+                    event.source,
+                    json.dumps(event.event_data),
+                    event.timestamp,
+                    event.event_hash,
+                    event.id
+                ))
+                result = cur.fetchone()
+                return EventRecord.from_record(result) if result else None
+        except psycopg2.errors.UniqueViolation:
+            logger.error(f"Event update failed: Duplicate event for app_id={event.app_id} and hash={event.event_hash}.")
+            raise ValueError("Duplicate event detected for this app.")
     
     def delete(self, event_id: int) -> bool:
         """Delete an event by its ID."""
@@ -108,7 +117,7 @@ class EventDAO:
         DELETE FROM events
         WHERE id = %s;
         """
-        
+        logger.info(f"Deleting event id={event_id}")
         with get_db() as (_, cur):
             cur.execute(delete_sql, (event_id,))
             return cur.rowcount > 0

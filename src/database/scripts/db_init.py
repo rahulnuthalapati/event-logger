@@ -21,8 +21,7 @@ CREATE TABLE IF NOT EXISTS events (
     source VARCHAR(128),
     event_data JSONB NOT NULL,
     timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    event_hash VARCHAR(128) NOT NULL,
-    auth_signature VARCHAR(256)
+    event_hash VARCHAR(128) NOT NULL
 );
 """
 
