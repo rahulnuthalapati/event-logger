@@ -47,7 +47,7 @@ Cloud Deployment
 2. **Receive JWT**: Upon registration, the backend issues a JWT (signed with the app's API key) to the user. This JWT authenticates all future requests for that app.
 3. **Log Events**: The developer (or their app) sends events to the backend using the JWT for authentication. Each event is securely stored and chained for tamper detection.
 4. **Login to Frontend**: Developers can paste their JWT into the frontend UI to 'log in' and view the events associated with their app.
-5. **View & Verify Events**: The frontend displays the event log and allows users to verify the integrity of the event chain for their app.
+5. **View & Verify Events**: The frontend displays the event log and allows users to verify the integrity of the event chain for their app. For each event of an app, its previous event's hash is stored in current event's record, so they are iterated one by one to detect integrity of the events.
 
 ---
 
