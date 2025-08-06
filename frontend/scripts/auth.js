@@ -1,4 +1,5 @@
 import { showEventsView } from './events.js';
+import { apiURL } from './main.js';
 
 export function setupAuthUI() {
     const registerBtn = document.getElementById('register-btn');
@@ -16,7 +17,7 @@ export function setupAuthUI() {
         }
         registerResult.innerHTML = `<div class='notification is-info is-light p-2'>Registering...</div>`;
         try {
-            const response = await fetch('http://localhost:8001/api/app/register', {
+            const response = await fetch(`${apiURL}/api/app/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: appName })
@@ -50,7 +51,7 @@ export function setupAuthUI() {
     }
 
     async function fetchEvents(token) {
-        const resp = await fetch('http://localhost:8001/api/events', {
+        const resp = await fetch(`${apiURL}/api/events`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!resp.ok) throw new Error('Invalid token or failed to fetch events');
