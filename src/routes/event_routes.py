@@ -34,12 +34,17 @@ def log_event(
     event_data_string = json.dumps(event_payload.data, sort_keys=True)
     event_hash = hashlib.sha256(event_data_string.encode()).hexdigest()
 
+    # Fetch the latest event for this app with a lock for concurrency safety
+    latest_event = event_dao.get_latest_by_app_id(app_id, for_update=True)
+    prev_event_hash = latest_event.event_hash if latest_event else None
+
     new_event = EventRecord(
         app_id=app_id,
         type=event_payload.type,
         source=event_payload.source,
         event_data=event_payload.data,
-        event_hash=event_hash
+        event_hash=event_hash,
+        prev_event_hash=prev_event_hash
     )
     try:
         event_dao.create(new_event)
@@ -64,29 +69,25 @@ def get_events(current_app: dict = Depends(get_current_app)):
     events = event_dao.get_by_app_id(app_id=app_id)
     return events
 
-def _verify_event_integrity(event: EventRecord) -> bool:
+@router.get("/events/proof")
+def proof_of_integrity(current_app: dict = Depends(get_current_app)):
     """
-    Recalculate the hash of the event's data and compare it to the stored hash.
-    Returns True if the hashes match (not tampered), False otherwise.
-    """
-    event_data_string = json.dumps(event.event_data, sort_keys=True)
-    recalculated_hash = hashlib.sha256(event_data_string.encode()).hexdigest()
-    return recalculated_hash == event.event_hash
-
-@router.get("/event/{event_id}/verify")
-def verify_event_integrity(event_id: int, current_app: dict = Depends(get_current_app)):
-    """
-    Verifies the integrity of a specific event by comparing the stored hash with a recalculated hash.
-    Only allows access to events belonging to the authenticated app.
+    Verifies the integrity of the event chain for the authenticated app.
+    Returns 'valid' if the chain is unbroken, otherwise 'invalid' and the break location.
     """
     app_id = current_app.get("app_id")
-    event = event_dao.get_by_id(event_id)
-    if not event:
-        return {"status": "not found", "integrity": None, "message": "Event not found."}
-    if event.app_id != app_id:
-        return {"status": "forbidden", "integrity": None, "message": "You do not have access to this event."}
-    is_valid = _verify_event_integrity(event)
-    if is_valid:
-        return {"status": "verified", "integrity": True}
-    else:
-        return {"status": "verification_failed", "integrity": False, "message": "This event may have been tampered with!"}
+    logger.info(f"Verifying proof of integrity for app_id={app_id}")
+    events = event_dao.get_by_app_id(app_id=app_id)
+    if not events or len(events) == 1:
+        return {"status": "valid", "message": "Zero or one event; chain is trivially valid."}
+    # Events are returned in DESC order, so reverse to get oldest to newest
+    events = list(reversed(events))
+    for i in range(1, len(events)):
+        if events[i].prev_event_hash != events[i-1].event_hash:
+            return {
+                "status": "invalid",
+                "break_index": i,
+                "event_id": events[i].id,
+                "message": "Chain broken at this event."
+            }
+    return {"status": "valid", "message": "Event chain is valid and unbroken."}

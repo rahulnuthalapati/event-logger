@@ -12,7 +12,7 @@ class EventDAO:
     
     def __init__(self):
         self.table_name = "events"
-        self.return_columns = "id, app_id, type, source, event_data, timestamp, event_hash"
+        self.return_columns = "id, app_id, type, source, event_data, timestamp, event_hash, prev_event_hash"
     
     def create_table(self) -> None:
         """Create the events table if it doesn't exist."""
@@ -24,7 +24,8 @@ class EventDAO:
             source VARCHAR(128),
             event_data JSONB NOT NULL,
             timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            event_hash VARCHAR(128) NOT NULL
+            event_hash VARCHAR(128) NOT NULL,
+            prev_event_hash VARCHAR(128)
         );
         """
         logger.info("Creating events table if not exists.")
@@ -34,8 +35,8 @@ class EventDAO:
     def create(self, event: EventRecord) -> EventRecord:
         """Create a new event record."""
         insert_sql = f"""
-        INSERT INTO events (app_id, type, source, event_data, timestamp, event_hash)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO events (app_id, type, source, event_data, timestamp, event_hash, prev_event_hash)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING {self.return_columns};
         """
         logger.info(f"Creating event for app_id={event.app_id}, type={event.type}")
@@ -47,7 +48,8 @@ class EventDAO:
                     event.source,
                     json.dumps(event.event_data),
                     event.timestamp,
-                    event.event_hash
+                    event.event_hash,
+                    event.prev_event_hash
                 ))
                 result = cur.fetchone()
                 logger.info(f"Event created with id={result[0] if result else 'unknown'}")
@@ -89,7 +91,7 @@ class EventDAO:
         """Update an existing event."""
         update_sql = f"""
         UPDATE events
-        SET app_id = %s, type = %s, source = %s, event_data = %s, timestamp = %s, event_hash = %s
+        SET app_id = %s, type = %s, source = %s, event_data = %s, timestamp = %s, event_hash = %s, prev_event_hash = %s
         WHERE id = %s
         RETURNING {self.return_columns};
         """
@@ -103,6 +105,7 @@ class EventDAO:
                     json.dumps(event.event_data),
                     event.timestamp,
                     event.event_hash,
+                    event.prev_event_hash,
                     event.id
                 ))
                 result = cur.fetchone()
@@ -121,3 +124,19 @@ class EventDAO:
         with get_db() as (_, cur):
             cur.execute(delete_sql, (event_id,))
             return cur.rowcount > 0
+
+    def get_latest_by_app_id(self, app_id: int, for_update: bool = False) -> Optional[EventRecord]:
+        """Get the latest event for a given app_id, optionally locking the row for update."""
+        select_sql = f"""
+        SELECT {self.return_columns}
+        FROM events
+        WHERE app_id = %s
+        ORDER BY timestamp DESC, id DESC
+        LIMIT 1
+        {"FOR UPDATE" if for_update else ""};
+        """
+        logger.info(f"Fetching latest event for app_id={app_id} with lock={for_update}")
+        with get_db() as (conn, cur):
+            cur.execute(select_sql, (app_id,))
+            result = cur.fetchone()
+            return EventRecord.from_record(result) if result else None

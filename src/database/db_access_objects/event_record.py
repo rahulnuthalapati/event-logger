@@ -12,6 +12,7 @@ class EventRecord:
     event_data: Dict[str, Any] = None
     timestamp: datetime = None
     event_hash: str = ""
+    prev_event_hash: str = None
     
     def __post_init__(self):
         if self.event_data is None:
@@ -29,5 +30,6 @@ class EventRecord:
             source=row[3],
             event_data=row[4],
             timestamp=row[5],
-            event_hash=row[6]
+            event_hash=row[6],
+            prev_event_hash=row[7] if len(row) > 7 else None
         )
