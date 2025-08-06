@@ -8,6 +8,10 @@
 - **Proof-of-Integrity**: Verify the event chain for tampering.
 - **Frontend**: Register, authenticate, and view events in a simple web UI.
 
+Cloud Deployment
+
+- [Live Demo @ http://18.234.243.50/app](http://18.234.243.50/app)
+
 ---
 
 ## Implementation Details
